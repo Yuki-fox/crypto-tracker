@@ -1,0 +1,22 @@
+{
+  "name": "crypto-tracker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "NITRO_UNIX_SOCKET_WORKERS=false nuxt dev",
+    "dev:host": "NITRO_UNIX_SOCKET_WORKERS=false nuxt dev --host",
+    "preview": "nuxt preview",
+    "user:create": "node scripts/create-user.js"
+  },
+  "devDependencies": {
+    "nuxt": "3.11.2"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "axios": "^1.6.0",
+    "@vueuse/nuxt": "^10.9.0"
+  }
+}
