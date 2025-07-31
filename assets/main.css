@@ -228,16 +228,27 @@ body::after {
   width: 36px;
   height: 36px;
   padding: 0;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.08); /* Сделали фон светлее */
+  border: 1px solid rgba(255, 255, 255, 0.12); /* Сделали границу светлее */
   border-radius: var(--radius-sm);
   font-size: 16px;
   backdrop-filter: blur(10px);
+  color: var(--text-secondary); /* Добавили цвет текста */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
 .btn-icon:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.15); /* Светлее при наведении */
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--text-primary); /* Еще светлее текст при наведении */
+  transform: translateY(-1px);
+}
+
+.btn-icon:active {
+  transform: translateY(0);
 }
 
 /* Формы */
@@ -334,8 +345,9 @@ body::after {
 }
 
 .badge-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-secondary);
+  background: rgba(240, 185, 11, 0.2);
+  color: var(--yellow);
+  border: 1px solid rgba(240, 185, 11, 0.3);
 }
 
 .badge-success {
@@ -545,4 +557,141 @@ input[type=number] {
 .price-insert-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+/* Добавьте эти стили в конец main.css */
+
+/* Стили для иконок Font Awesome */
+.fas, .fab, .far {
+  color: currentColor;
+}
+
+/* Иконки в кнопках */
+.btn i {
+  margin-right: 6px;
+}
+
+.btn i:last-child {
+  margin-right: 0;
+}
+
+/* Иконки в кнопках без текста */
+.btn-icon i {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Светлые иконки для лучшей видимости */
+.btn-icon {
+  color: var(--text-secondary);
+}
+
+.btn-icon:hover {
+  color: var(--text-primary);
+}
+
+/* Красная подсветка для кнопок удаления */
+.btn-icon-danger {
+  color: var(--text-secondary);
+}
+
+.btn-icon-danger:hover {
+  background: var(--danger) !important;
+  border-color: var(--danger) !important;
+  color: white !important;
+}
+
+/* Иконки в заголовках */
+h2 i {
+  opacity: 0.9;
+}
+
+/* Иконки в пустых состояниях */
+.empty-state-icon i {
+  font-size: 48px;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* Иконки в статусах */
+.status i {
+  font-size: 8px;
+  margin-right: 4px;
+}
+
+/* Иконки в бейджах */
+.badge i {
+  margin-right: 4px;
+  font-size: 12px;
+}
+
+/* Иконки в таблице */
+.table-row .btn-icon {
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.table-row:hover .btn-icon {
+  opacity: 1;
+}
+
+/* Логотип */
+.logo-icon {
+  color: var(--accent) !important;
+}
+
+/* Иконки в формах */
+.form-group label i {
+  margin-right: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* Анимация загрузки */
+.fa-spin {
+  animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Размеры иконок для разных контекстов */
+.price-symbol .symbol-icon i {
+  font-size: 20px;
+  color: var(--accent);
+}
+
+/* Увеличиваем контрастность для всех иконок */
+.card i {
+  opacity: 0.9;
+}
+
+.card:hover i {
+  opacity: 1;
+}
+
+.badge svg {
+  display: inline-block;
+  vertical-align: middle;
+  width: 14px;
+  height: 14px;
+}
+
+/* Цвет для XRP иконки */
+.badge-xrp svg {
+  fill: currentColor;
+}
+
+/* Убедимся что иконки правильно выровнены */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.badge i,
+.badge svg {
+  margin: 0;
 }

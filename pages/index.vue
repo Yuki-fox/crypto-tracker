@@ -2,9 +2,8 @@
   <div>
     <PriceMonitor :prices="prices" />
     
-    <!-- Верхняя секция: форма слева, активные позиции справа -->
-    <div class="grid">
-      <div class="grid-item">
+    <div class="adaptive-grid">
+      <div class="form-section">
         <TradeForm 
           ref="tradeForm"
           @added="handleTradeAdded" 
@@ -12,7 +11,7 @@
         />
       </div>
       
-      <div class="grid-item">
+      <div class="positions-section">
         <ActivePositions 
           :positions="activePositions" 
           :prices="prices"
@@ -22,7 +21,6 @@
       </div>
     </div>
     
-    <!-- Нижняя секция: закрытые позиции на всю ширину -->
     <div style="margin-top: var(--spacing-xl);">
       <ClosedPositions 
         :positions="closedPositions"
@@ -38,7 +36,9 @@ const prices = ref({})
 const tradeForm = ref(null)
 const router = useRouter()
 
-// Вычисляем позиции
+// Комиссия Binance
+const TRADING_FEE = 0.00075 // 0.075%
+
 const positions = computed(() => {
   if (!trades.value || !Array.isArray(trades.value)) return []
   
@@ -70,15 +70,25 @@ const positions = computed(() => {
     }
     
     if (position.closed && sellTrade) {
+      // Расчет с учетом комиссий
       const buyTotal = position.sellQuantity * position.buyPrice
+      const buyFee = buyTotal * TRADING_FEE // Комиссия при покупке
       const sellTotal = position.sellQuantity * position.sellPrice
-      position.pnl = sellTotal - buyTotal
-      position.pnlPercent = buyTotal > 0 ? (position.pnl / buyTotal) * 100 : 0
+      const sellFee = sellTotal * TRADING_FEE // Комиссия при продаже
+      
+      // P&L = (сумма продажи - комиссия продажи) - (сумма покупки + комиссия покупки)
+      position.pnl = (sellTotal - sellFee) - (buyTotal + buyFee)
+      position.pnlPercent = (buyTotal + buyFee) > 0 ? (position.pnl / (buyTotal + buyFee)) * 100 : 0
     } else if (!position.closed && prices.value && prices.value[position.symbol]) {
+      // Для нереализованного P&L тоже учитываем комиссии
       const buyTotal = position.buyQuantity * position.buyPrice
+      const buyFee = buyTotal * TRADING_FEE
       const currentTotal = position.buyQuantity * prices.value[position.symbol]
-      position.unrealizedPnl = currentTotal - buyTotal
-      position.unrealizedPnlPercent = buyTotal > 0 ? (position.unrealizedPnl / buyTotal) * 100 : 0
+      const potentialSellFee = currentTotal * TRADING_FEE
+      
+      // Нереализованный P&L = (потенциальная сумма продажи - комиссия) - (сумма покупки + комиссия)
+      position.unrealizedPnl = (currentTotal - potentialSellFee) - (buyTotal + buyFee)
+      position.unrealizedPnlPercent = (buyTotal + buyFee) > 0 ? (position.unrealizedPnl / (buyTotal + buyFee)) * 100 : 0
     }
     
     positionsList.push(position)
@@ -90,12 +100,14 @@ const positions = computed(() => {
   )
 })
 
-// Разделяем на активные и закрытые
 const activePositions = computed(() => positions.value.filter(p => !p.closed))
 const closedPositions = computed(() => positions.value.filter(p => p.closed))
 
-// Обновляем общий P&L
 const updateTotalPnl = inject('updateTotalPnl', () => {})
+const updateRealizedPnl = inject('updateRealizedPnl', () => {})
+const updateUnrealizedPnl = inject('updateUnrealizedPnl', () => {})
+const updateActivePositions = inject('updateActivePositions', () => {})
+const updateCurrentPrices = inject('updateCurrentPrices', () => {})
 
 watchEffect(() => {
   const total = positions.value.reduce((sum, pos) => {
@@ -107,7 +119,18 @@ watchEffect(() => {
     return sum
   }, 0)
   
+  const realized = positions.value
+    .filter(p => p.closed)
+    .reduce((sum, pos) => sum + (pos.pnl || 0), 0)
+  const unrealized = positions.value
+    .filter(p => !p.closed)
+    .reduce((sum, pos) => sum + (pos.unrealizedPnl || 0), 0)
+  
   updateTotalPnl(total)
+  updateRealizedPnl(realized)
+  updateUnrealizedPnl(unrealized)  // Добавьте эту строку
+  updateActivePositions(activePositions.value)
+  updateCurrentPrices(prices.value)
 })
 
 const loadTrades = async () => {
@@ -132,10 +155,8 @@ const loadPrices = async () => {
   const symbols = [...new Set(trades.value.map(t => t?.symbol).filter(Boolean))].join(',')
   if (symbols) {
     try {
-      console.log('Loading prices for:', symbols)
       const data = await $fetch(`/api/prices?symbols=${symbols}`)
       prices.value = data || {}
-      console.log('Prices loaded:', prices.value)
     } catch (error) {
       console.error('Error loading prices:', error)
       prices.value = {}
@@ -144,13 +165,11 @@ const loadPrices = async () => {
 }
 
 const handleTradeAdded = async () => {
-  console.log('Trade added, reloading...')
   await loadTrades()
   await loadPrices()
 }
 
 const handleTradeUpdated = async () => {
-  console.log('Trade updated, reloading...')
   await loadTrades()
   await loadPrices()
 }
@@ -160,19 +179,15 @@ const editTrade = (trade) => {
   tradeForm.value.editTrade(trade)
 }
 
-// Загружаем данные при монтировании
 onMounted(async () => {
   await loadTrades()
 })
 
-// Обновление цен каждые 30 секунд
 const { pause, resume } = useIntervalFn(async () => {
   await loadPrices()
 }, 30000)
 
-// Следим за изменениями trades
 watch(trades, async (newTrades) => {
-  console.log('Trades changed:', newTrades)
   if (newTrades && newTrades.length > 0) {
     await loadPrices()
   }
@@ -184,19 +199,47 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.grid {
+.adaptive-grid {
   display: grid;
   grid-template-columns: 400px 1fr;
+  grid-template-areas: 
+    "form positions";
   gap: 30px;
+  align-items: start;
 }
 
-.grid-item {
-  min-width: 0;
+.form-section {
+  grid-area: form;
+  position: sticky;
+  top: 90px;
+}
+
+.positions-section {
+  grid-area: positions;
+  min-height: 100%;
+}
+
+@media (min-width: 901px) {
+  .positions-section {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .positions-section > * {
+    flex: 1;
+  }
 }
 
 @media (max-width: 900px) {
-  .grid {
+  .adaptive-grid {
     grid-template-columns: 1fr;
+    grid-template-areas: 
+      "form"
+      "positions";
+  }
+  
+  .form-section {
+    position: static;
   }
 }
 </style>

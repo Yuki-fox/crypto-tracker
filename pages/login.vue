@@ -3,14 +3,18 @@
     <div class="login-container">
       <div class="card login-card">
         <div class="login-header">
-          <span class="logo-icon">₿</span>
+          <span class="logo-icon">
+            <Icon name="btc" size="48" />
+          </span>
           <h1>Crypto Tracker</h1>
           <p>Войдите в свой аккаунт</p>
         </div>
         
         <form @submit.prevent="handleLogin">
           <div class="form-group">
-            <label>Логин</label>
+            <label>
+              <Icon name="user" /> Логин
+            </label>
             <input
               v-model="form.username"
               type="text"
@@ -22,7 +26,9 @@
           </div>
           
           <div class="form-group">
-            <label>Пароль</label>
+            <label>
+              <Icon name="lock" /> Пароль
+            </label>
             <input
               v-model="form.password"
               type="password"
@@ -34,13 +40,15 @@
           </div>
           
           <button type="submit" class="btn btn-primary btn-block" :disabled="loading">
+            <Icon v-if="loading" name="spinner" />
+            <Icon v-else name="sign-in" />
             {{ loading ? 'Вход...' : 'Войти' }}
           </button>
         </form>
         
         <transition name="fade">
           <div v-if="error" class="message message-error">
-            {{ error }}
+            <Icon name="exclamation-circle" /> {{ error }}
           </div>
         </transition>
       </div>
@@ -94,9 +102,7 @@ const handleLogin = async () => {
 }
 
 .logo-icon {
-  font-size: 48px;
   color: var(--accent);
-  font-weight: bold;
   display: block;
   margin-bottom: var(--spacing-md);
 }
@@ -118,14 +124,37 @@ form {
   gap: var(--spacing-lg);
 }
 
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .btn-block {
   width: 100%;
   height: 48px;
   font-size: 16px;
   margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .message {
   margin-top: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>

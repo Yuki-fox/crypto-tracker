@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   ssr: false,
   app: {
     head: {
+      title: 'Crypto Tracker - Мониторинг криптовалютных позиций',
       link: [
         { 
           rel: 'stylesheet', 
@@ -13,6 +14,10 @@ export default defineNuxtConfig({
         }
       ]
     }
+  },
+  components: {
+    global: true,
+    dirs: ['~/components']
   },
   runtimeConfig: {
     jwtSecret: process.env.JWT_SECRET || 'your-secret-key',

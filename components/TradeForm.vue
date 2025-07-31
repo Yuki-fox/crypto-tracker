@@ -1,7 +1,10 @@
 <template>
   <div class="card">
     <div class="card-header">
-      <h2>{{ editingPosition ? '📊 Закрыть позицию' : '🚀 Открыть позицию' }}</h2>
+      <h2>
+        <Icon :name="editingPosition ? 'chart-line' : 'rocket'" />
+        {{ editingPosition ? 'Закрыть позицию' : 'Открыть позицию' }}
+      </h2>
       <div v-if="editingPosition" class="badge badge-primary">
         {{ editingPosition.symbol }}
       </div>
@@ -9,7 +12,7 @@
     
     <transition name="fade">
       <div v-if="successMessage" class="message message-success">
-        ✨ {{ successMessage }}
+        <Icon name="check-circle" /> {{ successMessage }}
       </div>
     </transition>
     
@@ -40,7 +43,7 @@
             class="price-insert-btn"
             :disabled="loadingPrice"
           >
-            {{ loadingPrice ? 'Загрузка...' : 'Вставить текущую цену' }}
+            {{ loadingPrice ? 'Загрузка...' : 'Текущая цена' }}
           </button>
         </div>
         
@@ -68,6 +71,8 @@
       </div>
       
       <button type="submit" class="btn btn-primary btn-block" :disabled="loading">
+        <Icon v-if="loading" name="spinner" />
+        <Icon v-else name="plus" />
         {{ loading ? 'Сохранение...' : 'Открыть позицию' }}
       </button>
     </form>
@@ -103,12 +108,12 @@
               class="price-insert-btn"
               :disabled="loadingPrice"
             >
-              {{ loadingPrice ? 'Загрузка...' : 'Вставить текущую цену' }}
+              {{ loadingPrice ? 'Загрузка...' : 'Текущая цена' }}
             </button>
           </div>
           
           <div class="form-group">
-            <label>Количество (макс: {{ editingPosition.remainingQuantity || 0 }})</label>
+            <label>Количество</label>
             <input
               v-model.number="sellForm.quantity"
               type="number"
@@ -133,9 +138,12 @@
         
         <div class="form-actions">
           <button type="submit" class="btn btn-success" :disabled="loading">
+            <Icon v-if="loading" name="spinner" />
+            <Icon v-else name="check" />
             {{ loading ? 'Сохранение...' : 'Продать' }}
           </button>
           <button @click="cancelEdit" type="button" class="btn btn-secondary">
+            <Icon name="times" />
             Отмена
           </button>
         </div>
@@ -151,7 +159,6 @@ const successMessage = ref('')
 const loading = ref(false)
 const loadingPrice = ref(false)
 
-// Форма для новой позиции
 const form = ref({
   symbol: 'BTC',
   type: 'buy',
@@ -160,26 +167,20 @@ const form = ref({
   date: new Date().toISOString().slice(0, 16)
 })
 
-// Форма для продажи
 const sellForm = ref({
   price: null,
   quantity: null,
   date: new Date().toISOString().slice(0, 16)
 })
 
-// Функция для получения и вставки текущей цены
 const insertCurrentPrice = async (type) => {
   loadingPrice.value = true
   try {
-    // Определяем символ в зависимости от типа операции
     const symbol = type === 'buy' ? form.value.symbol : editingPosition.value.symbol
-    
-    // Получаем текущую цену
     const response = await $fetch(`/api/prices?symbols=${symbol}`)
     const price = response[symbol]
     
     if (price) {
-      // Вставляем цену в соответствующее поле
       if (type === 'buy') {
         form.value.price = price
       } else {
@@ -238,7 +239,6 @@ const handleSell = async () => {
   
   loading.value = true
   try {
-    // Создаем сделку продажи
     const sellResponse = await $fetch('/api/trades', {
       method: 'POST',
       body: {
@@ -255,7 +255,6 @@ const handleSell = async () => {
       throw new Error('Ошибка при создании продажи')
     }
     
-    // Если продано не все, создаем новую позицию с остатком
     const remaining = (editingPosition.value.remainingQuantity || 0) - sellForm.value.quantity
     if (remaining > 0) {
       const remainingResponse = await $fetch('/api/trades', {
@@ -294,8 +293,11 @@ const showSuccess = (message) => {
 }
 
 const resetForm = () => {
+  // Сохраняем текущий выбранный символ
+  const currentSymbol = form.value.symbol
+  
   form.value = {
-    symbol: 'BTC',
+    symbol: currentSymbol, // Используем сохраненный символ вместо 'BTC'
     type: 'buy',
     price: null,
     quantity: null,
@@ -334,12 +336,10 @@ const editTrade = (position) => {
   }
 }
 
-// ВАЖНО: Экспортируем метод editTrade
 defineExpose({ editTrade })
 </script>
 
 <style scoped>
-/* Стили для формы */
 .info-box {
   background: var(--bg-tertiary);
   border-radius: var(--radius);
@@ -357,6 +357,13 @@ defineExpose({ editTrade })
 
 .info-row:not(:last-child) {
   border-bottom: 1px solid var(--border);
+}
+
+.info-box strong {
+  word-break: break-all;
+  max-width: 150px;
+  display: inline-block;
+  text-align: right;
 }
 
 .text-accent {
@@ -386,7 +393,6 @@ form {
   margin-top: 8px;
 }
 
-/* Стиль для кнопки вставки цены */
 .price-insert-btn {
   margin-top: 6px;
   padding: 0;
@@ -412,7 +418,6 @@ form {
   cursor: not-allowed;
 }
 
-/* Анимация появления сообщения */
 .fade-enter-active, .fade-leave-active {
   transition: all 0.3s ease;
 }

@@ -2,7 +2,9 @@
   <div class="price-monitor" v-if="prices && Object.keys(prices).length > 0">
     <div v-for="(price, symbol) in prices" :key="symbol" class="price-card">
       <div class="price-symbol">
-        <span class="symbol-icon">{{ symbol === 'BTC' ? '₿' : symbol.charAt(0) }}</span>
+        <span class="symbol-icon">
+          <Icon :name="symbol.toLowerCase()" size="20" />
+        </span>
         <span>{{ symbol }}</span>
       </div>
       <div class="price-value">${{ (price || 0).toFixed(2) }}</div>
